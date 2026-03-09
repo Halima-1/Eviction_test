@@ -5,7 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {Owners} from "../src/Owners.sol";
 
 contract OwnersScript is Script {
-    Owners public counter;
+    Owners public owner;
 
     function setUp() public {}
 
@@ -17,7 +17,7 @@ contract OwnersScript is Script {
         owners[1] = 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
         owners[2] = 0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db;
 
-        counter = new Owners(owners, 2);
+        owner= new Owners(owners, 2);
 
         vm.stopBroadcast();
     }

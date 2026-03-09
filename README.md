@@ -1,66 +1,39 @@
-## Foundry
+##Eviction Vault – Owners Contract Refactor & Hardening
+Project Overview
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+##This project is part of the Nebula Yield – Eviction Vault Hardening Challenge. The original EvictionVault contract was a single-file monolith with multiple critical vulnerabilities.
 
-Foundry consists of:
+The objective of this phase was to:
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+-Refactor the monolithic contract into a modular, multi-file architecture.
 
-## Documentation
+-Mitigate critical vulnerabilities.
 
-https://book.getfoundry.sh/
+-Implement a Foundry test suite to verify correct functionality.
 
-## Usage
+-Ensure the contract compiles cleanly and passes all positive tests.
 
-### Build
+##Key Features
 
-```shell
-$ forge build
-```
+-Multi-sig transaction system: Submit, confirm, and execute transactions based on a configurable threshold.
 
-### Test
+-Timelock: Transactions cannot execute until a defined delay passes.
 
-```shell
-$ forge test
-```
+-Owner management: Prevent duplicate or zero-address owners, ensures only valid owners participate.
 
-### Format
+-Pause mechanism: Contract operations can be paused/unpaused safely by owners.
 
-```shell
-$ forge fmt
-```
+-Secure ETH transfers: Uses .transfer .
 
-### Gas Snapshots
+##Foundry Testing
 
-```shell
-$ forge snapshot
-```
+- The test/Owners.t.sol suite includes:
 
-### Anvil
+- Submit Transaction – Verifies owners can submit transactions.
 
-```shell
-$ anvil
-```
+- Confirm Transaction – Confirms transactions and sets timelock when threshold reached.
 
-### Deploy
+ -Execute Transaction – Executes a confirmed transaction after the timelock.
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+- Multiple Confirmations – Tracks confirmations correctly beyond the threshold.
 
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```

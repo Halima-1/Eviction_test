@@ -6,6 +6,8 @@ contract Merkle {
     bytes32 public merkleRoot;
     bool public paused;
 
+    error pausedd();
+
     mapping(address => bool) public claimed;
     mapping(bytes32 => bool) public usedHashes;
 
@@ -17,22 +19,31 @@ contract Merkle {
         emit MerkleRootSet(root);
     }
 
+    modifier onlyOwner() {
+        if(!paused){
+
+            _;
+        }
+        
+    }
+
     function verifySignature(
         address signer,
         bytes32 messageHash,
         bytes memory signature
     ) external pure returns (bool) {
         return ECDSA.recover(messageHash, signature) == signer;
+        
     }
 
-    function claim(bytes32[] calldata proof, uint256 amount) external {
-        require(!paused);
+    function claim(bytes32[] calldata proof, uint256 amount) external onlyOwner {
+        require(!paused, pausedd());
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender, amount));
         bytes32 computed = MerkleProof.processProof(proof, leaf);
         require(computed == merkleRoot);
         require(!claimed[msg.sender]);
 
-        
+
         emit Claim(msg.sender, amount);
     }
 }

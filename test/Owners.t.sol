@@ -1,27 +1,106 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// test/Owners.t.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-import {Test} from "forge-std/Test.sol";
-import {Owners} from "../src/Owners.sol";
+import "forge-std/Test.sol";
+import "../src/Owners.sol";
 
 contract OwnersTest is Test {
-    Owners public owners;
+    Owners public ownersContract;
+
+    address internal ganiyat;
+    address internal halima;
+    address internal isaac;
+        address internal feyi;
+
 
     function setUp() public {
+        // Deploy contract with 3 owners and threshold 2
+        // address ;
+         ganiyat = makeAddr("ganiyat");
+        halima = makeAddr("halima");
+        isaac = makeAddr("isaac");
+                feyi = makeAddr("feyi");
 
- address[] memory _owners = new address[](3);
-        _owners[0] = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
-        _owners[1] = 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
-        _owners[2] = 0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db;
 
-        owners = new Owners(_owners, 2);   
+        address[] memory signers = new address[](3);
+        signers[0] = ganiyat;
+        signers[1] = halima;
+        signers[2] = isaac;
+
+
+        ownersContract = new Owners(signers, 2);
     }
 
-    function test_submitTxn() public {
-       
+    function testSubmitTransaction() public {
+        vm.prank(ganiyat);
+        ownersContract.submitTransaction(halima, 1 ether, "");
+
+        Owners.Transaction memory txn = ownersContract.transactions(0);
+
+        assertEq(txn.to, halima);
+        assertEq(txn.value, 1 ether);
+        assertEq(txn.confirmations, 1);
+        assertFalse(txn.executed);
     }
 
-    function testFuzz_confirmTxn(uint256 x) public {
-       
+    function testConfirmTransactionSetsTimelock() public {
+        vm.prank(ganiyat);
+        ownersContract.submitTransaction(halima, 1 ether, "");
+
+        // Confirm with second owner (threshold = 2)
+        vm.warp(block.timestamp + 10);
+        vm.prank(isaac);
+        ownersContract.confirmTransaction(0);
+
+        Owners.Transaction memory txn = ownersContract.transactions(0);
+
+        // Execution time should be set
+        assertGt(txn.executionTime, 0);
+        assertEq(txn.confirmations, 2);
     }
+
+    function testExecuteTransaction() public {
+        // Fund halima for testing call
+        vm.deal(address(ownersContract), 1 ether);
+
+        vm.prank(ganiyat);
+        ownersContract.submitTransaction(halima, 1 ether, "");
+
+        // Confirm with second owner
+        vm.prank(isaac);
+        ownersContract.confirmTransaction(0);
+
+        Owners.Transaction memory txnBefore = ownersContract.transactions(0);
+
+        // Fast forward time past timelock
+        vm.warp(txnBefore.executionTime + 1);
+
+        // Execute transaction
+        vm.prank(ganiyat);
+        ownersContract.executeTransaction(0);
+
+        Owners.Transaction memory txnAfter = ownersContract.transactions(0);
+        assertTrue(txnAfter.executed);
+    }
+
+    function testMultipleConfirmations() public {
+        vm.prank(ganiyat);
+        ownersContract.submitTransaction(halima, 1 ether, "");
+
+        // Confirm twice with isaac and owner3
+        vm.prank(isaac);
+        ownersContract.confirmTransaction(0);
+
+        Owners.Transaction memory txn = ownersContract.transactions(0);
+        assertEq(txn.confirmations, 2); // threshold reached
+
+        vm.prank(isaac);
+        ownersContract.confirmTransaction(0);
+
+        txn = ownersContract.transactions(0);
+        assertEq(txn.confirmations, 3);
+    }
+
+
 }
