@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../lib/openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract EvictionVault {
 
@@ -20,19 +19,26 @@ contract EvictionVault {
     mapping(address => bool) public isOwner;
 
     uint256 public threshold;
-    bytes32 public merkleRoot;
-    uint256 public txCount;
-uint256 public constant TIMELOCK_DURATION = 1 hours;
-    uint256 public totalVaultValue;
-    bool public paused;
 
-    
     mapping(uint256 => mapping(address => bool)) public confirmed;
     mapping(uint256 => Transaction) public transactions;
+
+    uint256 public txCount;
+
     mapping(address => uint256) public balances;
+
+    bytes32 public merkleRoot;
+
     mapping(address => bool) public claimed;
+
     mapping(bytes32 => bool) public usedHashes;
-    
+
+    uint256 public constant TIMELOCK_DURATION = 1 hours;
+
+    uint256 public totalVaultValue;
+
+    bool public paused;
+
     event Deposit(address indexed depositor, uint256 amount);
     event Withdrawal(address indexed withdrawer, uint256 amount);
     event Submission(uint256 indexed txId);
@@ -139,7 +145,7 @@ uint256 public constant TIMELOCK_DURATION = 1 hours;
         bytes32 messageHash,
         bytes memory signature
     ) external pure returns (bool) {
-        return ECDSA.recover(messageHash, signature) == signer;
+        return MerkleProof.recover(messageHash, signature) == signer;
     }
 
     function emergencyWithdrawAll() external {
